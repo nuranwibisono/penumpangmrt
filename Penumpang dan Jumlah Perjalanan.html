@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Penumpang dan Jumlah Perjalanan</title>
+<style>
+:root{--bg:#fff;--ink:#222;--mut:#666;--grid:#e6e6e6;--c1:#E8A200;--c2:#D2561A;--card:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#161616;--ink:#f0eee8;--mut:#a5a5a5;--grid:#333;--c1:#FFC233;--c2:#FF8A50;--card:#222}}
+:root[data-theme="dark"]{--bg:#161616;--ink:#f0eee8;--mut:#a5a5a5;--grid:#333;--c1:#FFC233;--c2:#FF8A50;--card:#222}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:860px;margin:0 auto;padding:20px 16px 28px}
+h1{font-size:1.5rem;margin:0 0 4px;line-height:1.2}
+p.sub{margin:0 0 14px;color:var(--mut);font-size:.95rem}
+.tabs{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.tabs button{font:inherit;font-size:.9rem;padding:6px 14px;border-radius:99px;border:1px solid var(--grid);background:var(--bg);color:var(--ink);cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.wrap{position:relative}
+svg{width:100%;height:auto;display:block;touch-action:pan-y}
+svg text{fill:var(--mut);font-size:12px}
+.tip{position:absolute;pointer-events:none;background:var(--card);color:var(--ink);border:1px solid var(--grid);border-radius:8px;padding:8px 10px;font-size:.85rem;box-shadow:0 2px 8px rgba(0,0,0,.15);display:none;white-space:nowrap}
+.tip b{display:block;margin-bottom:2px}
+.k{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+.leg{display:flex;gap:16px;font-size:.9rem;margin:6px 0 0;flex-wrap:wrap}
+.note{color:var(--mut);font-size:.8rem;margin-top:12px}
+</style>
+</head>
+<body>
+<main>
+<h1>Penumpang naik sekitar 31%, jumlah perjalanan nyaris tetap</h1>
+<p class="sub">Penumpang dan jumlah perjalanan per bulan, Januari 2024 – Januari 2026</p>
+<div class="tabs"><button id="b1" aria-pressed="true">Indeks (Jan 2024 = 100)</button><button id="b2" aria-pressed="false">Angka asli</button></div>
+<div class="wrap" id="w"><svg id="s" viewBox="0 0 800 420" role="img" aria-label="Grafik penumpang dan jumlah perjalanan bulanan"></svg><div class="tip" id="t"></div></div>
+<div class="leg"><span><i class="k" style="background:var(--c1)"></i>Penumpang (juta orang)</span><span><i class="k" style="background:var(--c2)"></i>Jumlah perjalanan</span></div>
+<p class="note">Catatan: hanya Jan '24, Jan '25, Des '25, dan Jan '26 yang tertera di grafik sumber. Nilai bulan lain diperkirakan dari grafik. Sumber: (isi sumber asli).</p>
+</main>
+<script>
+const M=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+const P=[3.13,2.60,2.87,2.61,3.17,3.47,3.78,3.74,3.55,3.86,3.51,3.58,3.55,3.48,3.20,3.26,3.67,3.70,4.38,4.00,3.91,4.40,4.15,4.20,4.10];
+const T=[8241,7520,7950,7590,7830,7720,8270,8210,7850,8290,7850,8100,8043,7410,8020,7590,7870,7760,8270,8040,7930,8290,7830,8215,8109];
+const L=P.map((_,i)=>M[i%12]+" '"+(24+Math.floor(i/12)));
+const IP=P.map(v=>v/P[0]*100),IT=T.map(v=>v/T[0]*100);
+const fmt=(v,d=0)=>v.toLocaleString('id-ID',{minimumFractionDigits:d,maximumFractionDigits:d});
+const S=document.getElementById('s'),tip=document.getElementById('t'),W=document.getElementById('w');
+const ml=48,mr=60,mt=16,mb=40,iw=800-ml-mr,ih=420-mt-mb,n=P.length;
+let mode='idx';
+const X=i=>ml+(i+.5)*iw/n;
+function draw(){
+  const idx=mode==='idx',lo=idx?80:0,hi=idx?145:6;
+  const Y=v=>mt+ih-(v-lo)/(hi-lo)*ih;
+  const Y2=v=>mt+ih-v/9000*ih;
+  let s='';
+  const ticks=idx?[80,90,100,110,120,130,140]:[0,1,2,3,4,5,6];
+  ticks.forEach(t=>{s+=`<line x1="${ml}" x2="${800-mr}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--grid)"/><text x="${ml-8}" y="${Y(t)+4}" text-anchor="end">${t}</text>`});
+  if(!idx)[0,1500,3000,4500,6000,7500,9000].forEach(t=>{s+=`<text x="${800-mr+8}" y="${Y2(t)+4}">${fmt(t)}</text>`});
+  for(let i=0;i<n;i+=3)s+=`<text x="${X(i)}" y="${420-mb+18}" text-anchor="middle">${L[i]}</text>`;
+  if(idx){
+    s+=`<line x1="${ml}" x2="${800-mr}" y1="${Y(100)}" y2="${Y(100)}" stroke="var(--mut)" stroke-dasharray="4 4"/>`;
+    const pl=a=>a.map((v,i)=>X(i)+','+Y(v)).join(' ');
+    s+=`<polyline fill="none" stroke="var(--c1)" stroke-width="3" points="${pl(IP)}"/><polyline fill="none" stroke="var(--c2)" stroke-width="3" points="${pl(IT)}"/>`;
+    s+=`<text x="${X(n-1)+8}" y="${Y(IP[n-1])+4}" style="fill:var(--c1);font-weight:700">${fmt(IP[n-1])}</text><text x="${X(n-1)+8}" y="${Y(IT[n-1])+4}" style="fill:var(--c2);font-weight:700">${fmt(IT[n-1])}</text>`;
+  }else{
+    const bw=iw/n*.55;
+    P.forEach((v,i)=>{s+=`<rect x="${X(i)-bw/2}" y="${Y(v)}" width="${bw}" height="${Y(0)-Y(v)}" fill="var(--c1)"/>`});
+    s+=`<polyline fill="none" stroke="var(--c2)" stroke-width="3" points="${T.map((v,i)=>X(i)+','+Y2(v)).join(' ')}"/>`;
+    T.forEach((v,i)=>{s+=`<circle cx="${X(i)}" cy="${Y2(v)}" r="3.5" fill="var(--bg)" stroke="var(--c2)" stroke-width="2"/>`});
+    [0,12,23,24].forEach(i=>{s+=`<text x="${X(i)}" y="${Y(P[i])-6}" text-anchor="middle" style="fill:var(--ink);font-weight:700">${fmt(P[i],2)}</text>`});
+  }
+  s+='<line id="cur" y1="'+mt+'" y2="'+(mt+ih)+'" stroke="var(--mut)" stroke-width="1" opacity="0"/>';
+  S.innerHTML=s;
+}
+function show(e){
+  const r=S.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*800;
+  const i=Math.max(0,Math.min(n-1,Math.round((px-ml)/(iw/n)-.5)));
+  const c=document.getElementById('cur');c.setAttribute('x1',X(i));c.setAttribute('x2',X(i));c.setAttribute('opacity',.5);
+  tip.innerHTML=`<b>${L[i]}</b><span class="k" style="background:var(--c1)"></span>${fmt(P[i],2)} juta penumpang<br><span class="k" style="background:var(--c2)"></span>${fmt(T[i])} perjalanan`+(mode==='idx'?`<br>Indeks: ${fmt(IP[i])} / ${fmt(IT[i])}`:'');
+  tip.style.display='block';
+  const wr=W.getBoundingClientRect(),x=e.clientX-wr.left,tw=tip.offsetWidth;
+  tip.style.left=Math.min(Math.max(0,x+12),wr.width-tw)+'px';tip.style.top='8px';
+}
+S.addEventListener('pointermove',show);
+S.addEventListener('pointerleave',()=>{tip.style.display='none';const c=document.getElementById('cur');if(c)c.setAttribute('opacity',0)});
+function set(m){mode=m;b1.setAttribute('aria-pressed',m==='idx');b2.setAttribute('aria-pressed',m==='abs');draw()}
+b1.onclick=()=>set('idx');b2.onclick=()=>set('abs');
+draw();
+</script>
+</body>
+</html>
